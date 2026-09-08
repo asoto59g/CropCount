@@ -3,6 +3,7 @@
 [![GitHub repo](https://img.shields.io/badge/GitHub-asoto59g%2FCropCount-181717?logo=github&logoColor=white)](https://github.com/asoto59g/CropCount)
 [![GitHub stars](https://img.shields.io/github/stars/asoto59g/CropCount?style=flat&logo=github)](https://github.com/asoto59g/CropCount/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/asoto59g/CropCount?logo=git)](https://github.com/asoto59g/CropCount/commits/main/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-app-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-vision-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
@@ -295,4 +296,13 @@ Limitaciones conocidas:
 
 ## Licencia y datos
 
-Este repositorio contiene código y datos de trabajo del proyecto. Verificar permisos de uso y distribución de las imágenes aéreas antes de compartir el conjunto completo.
+El código fuente de CropCount se distribuye bajo **GNU General Public License v3.0 (GPLv3)**. Consulta [`LICENSE`](LICENSE) y el texto oficial en <https://www.gnu.org/licenses/gpl-3.0.html>.
+
+La GPLv3 aplica al código fuente, no concede automáticamente derechos sobre:
+
+- `DJI_11.jpg` y otras imágenes aéreas.
+- Fotografías de `Train_photos/`.
+- Datos geoespaciales, ortomosaicos o información de clientes.
+- Modelos `.npz` derivados de datos cuyo uso esté restringido.
+
+Antes de redistribuir imágenes, modelos o resultados, verificar la autorización del propietario de los datos. Si se requiere que los datos tengan una licencia distinta, documentarla por separado.

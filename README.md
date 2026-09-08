@@ -11,7 +11,7 @@
 [![NumPy](https://img.shields.io/badge/NumPy-arrays-013243?logo=numpy&logoColor=white)](https://numpy.org/)
 [![Status](https://img.shields.io/badge/Estado-prototipo%20funcional-orange)](#estado-y-validacion)
 
-Repositorio oficial: <https://github.com/asoto59g/CropCount>
+
 
 Aplicación pública: <https://cropcount-cftuhniyxaof8yjx9u7ujk.streamlit.app/>
 

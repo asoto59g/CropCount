@@ -106,10 +106,10 @@ En Streamlit Cloud seleccionar:
 |---|---|
 | Repository | `asoto59g/CropCount` |
 | Branch | `main` |
-| Main file path | `cropcount_app.py` |
+| Main file path | `app.py` |
 | Python dependencies | `requirements.txt` |
 
-Después de desplegar, la aplicación quedará disponible en una URL pública de Streamlit. El modelo y las imágenes que estén dentro del repositorio se cargarán como archivos locales de la app. Los datos privados o pesados deben mantenerse fuera del repositorio y cargarse mediante los controles de la interfaz o un almacenamiento autorizado.
+Después de desplegar, la aplicación quedará disponible en una URL pública de Streamlit. `app.py` es la entrada principal y muestra la navegación multipágina: vectorización individual, comparación, CropCount general y modelo de palma. El modelo y las imágenes que estén dentro del repositorio se cargarán como archivos locales de la app. Los datos privados o pesados deben mantenerse fuera del repositorio y cargarse mediante los controles de la interfaz o un almacenamiento autorizado.
 
 ## Aplicaciones
 

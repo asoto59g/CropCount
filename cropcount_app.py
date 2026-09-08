@@ -134,6 +134,16 @@ def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[b
     return cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
 
 
+def crop_detection(rgb: np.ndarray, contour: np.ndarray, padding: int = 80) -> np.ndarray:
+    height, width = rgb.shape[:2]
+    x, y, box_width, box_height = cv2.boundingRect(contour)
+    left = max(0, x - padding)
+    top = max(0, y - padding)
+    right = min(width, x + box_width + padding)
+    bottom = min(height, y + box_height + padding)
+    return rgb[top:bottom, left:right]
+
+
 def review_training_detections() -> None:
     review = st.session_state["crop_training_review"]
     contours = review["contours"]
@@ -149,14 +159,15 @@ def review_training_detections() -> None:
     )
     if clicked:
         click_x, click_y = float(clicked["x"]), float(clicked["y"])
+        click_key = (round(click_x), round(click_y))
         containing = []
         for index, contour in enumerate(contours, start=1):
             x, y, width, height = cv2.boundingRect(contour)
             if x <= click_x <= x + width and y <= click_y <= y + height:
                 containing.append((cv2.pointPolygonTest(contour, (click_x, click_y), True), index))
-        if containing:
+        if containing and click_key != st.session_state.get("training_last_click"):
+            st.session_state["training_last_click"] = click_key
             st.session_state["training_selected_id"] = max(containing)[1]
-            st.rerun()
 
     selected_id = st.session_state.get("training_selected_id")
     action_1, action_2 = st.columns(2)
@@ -174,6 +185,9 @@ def review_training_detections() -> None:
         st.rerun()
 
     selected_label = f" Selected: {selected_id}." if selected_id else ""
+    if selected_id:
+        st.info(f"Training plant selected: {selected_id}.")
+        st.image(crop_detection(review["rgb"], contours[selected_id - 1]), caption=f"Training plant crop {selected_id}", use_container_width=True)
     st.info(f"Training plants kept: {len(contours) - len(excluded_ids)} of {len(contours)}.{selected_label}")
     selected_from_menu = st.multiselect(
         "Excluded training false positives",
@@ -290,12 +304,14 @@ if "crop_detection" in st.session_state:
     )
     if clicked:
         click_x, click_y = float(clicked["x"]), float(clicked["y"])
+        click_key = (round(click_x), round(click_y))
         containing = []
         for index, contour in enumerate(contours, start=1):
             x, y, width, height = cv2.boundingRect(contour)
             if x <= click_x <= x + width and y <= click_y <= y + height:
                 containing.append((cv2.pointPolygonTest(contour, (click_x, click_y), True), index))
-        if containing:
+        if containing and click_key != st.session_state.get("crop_last_click"):
+            st.session_state["crop_last_click"] = click_key
             st.session_state["crop_selected_id"] = max(containing)[1]
 
     selected_id = st.session_state.get("crop_selected_id")
@@ -318,6 +334,7 @@ if "crop_detection" in st.session_state:
     if selected_id:
         selected_score = scores[selected_id - 1] * 100
         st.info(f"Planta seleccionada: {selected_id} ({selected_score:.1f}%). El rectángulo amarillo indica la selección.")
+        st.image(crop_detection(detection["rgb"], contours[selected_id - 1]), caption=f"Recorte de la planta detectada {selected_id}", use_container_width=True)
 
     excluded_ids = st.multiselect(
         "Excluir falsos positivos",

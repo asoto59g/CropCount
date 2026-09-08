@@ -1,4 +1,7 @@
 # Radial Signature
+<p align="center">
+  <img src="firma_radial_animada.gif" alt="Firma radial animada" width="800">
+</p>
 
 [![GitHub repo](https://img.shields.io/badge/GitHub-asoto59g%2FCropCount-181717?logo=github&logoColor=white)](https://github.com/asoto59g/CropCount)
 [![GitHub stars](https://img.shields.io/github/stars/asoto59g/CropCount?style=flat&logo=github)](https://github.com/asoto59g/CropCount/stargazers)

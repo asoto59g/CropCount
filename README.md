@@ -91,6 +91,23 @@ python -m pip install -r requirements.txt
 
 El archivo `requirements.txt` instala Streamlit, OpenCV, NumPy, Pillow y Matplotlib.
 
+## Publicar en Streamlit Community Cloud
+
+El repositorio está preparado para desplegar **CropCount** desde:
+
+<https://share.streamlit.io>
+
+En Streamlit Cloud seleccionar:
+
+| Campo | Valor |
+|---|---|
+| Repository | `asoto59g/CropCount` |
+| Branch | `main` |
+| Main file path | `cropcount_app.py` |
+| Python dependencies | `requirements.txt` |
+
+Después de desplegar, la aplicación quedará disponible en una URL pública de Streamlit. El modelo y las imágenes que estén dentro del repositorio se cargarán como archivos locales de la app. Los datos privados o pesados deben mantenerse fuera del repositorio y cargarse mediante los controles de la interfaz o un almacenamiento autorizado.
+
 ## Aplicaciones
 
 ### 0. CropCount: aplicación general para cultivos

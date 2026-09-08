@@ -4,6 +4,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/asoto59g/CropCount?style=flat&logo=github)](https://github.com/asoto59g/CropCount/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/asoto59g/CropCount?logo=git)](https://github.com/asoto59g/CropCount/commits/main/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://cropcount-cftuhniyxaof8yjx9u7ujk.streamlit.app/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-app-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-vision-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
@@ -11,6 +12,8 @@
 [![Status](https://img.shields.io/badge/Estado-prototipo%20funcional-orange)](#estado-y-validacion)
 
 Repositorio oficial: <https://github.com/asoto59g/CropCount>
+
+Aplicación pública: <https://cropcount-cftuhniyxaof8yjx9u7ujk.streamlit.app/>
 
 Aplicación experimental para detectar cultivos en imágenes RGB, vectorizar plantas, extraer firmas radiales y contar individuos en nuevas plantaciones. El flujo está diseñado para imágenes aéreas con una resolución conocida, actualmente calibrada por defecto a **6 cm/píxel**.
 

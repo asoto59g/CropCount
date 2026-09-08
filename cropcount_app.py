@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import streamlit as st
+from streamlit_image_coordinates import streamlit_image_coordinates
 from PIL import Image
 
 
@@ -120,14 +121,15 @@ def read_model(source) -> dict[str, np.ndarray]:
         return {key: model[key] for key in model.files}
 
 
-def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[bool], excluded: set[int] | None = None) -> np.ndarray:
+def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[bool], excluded: set[int] | None = None, selected: int | None = None) -> np.ndarray:
     output = cv2.cvtColor(rgb.copy(), cv2.COLOR_RGB2BGR)
     for index, contour in enumerate(contours):
         if index + 1 in (excluded or set()):
             continue
-        color = (0, 0, 255) if recognized[index] else (0, 165, 255)
+        color = (0, 255, 255) if index + 1 == selected else ((0, 0, 255) if recognized[index] else (0, 165, 255))
         x, y, width, height = cv2.boundingRect(contour)
-        cv2.rectangle(output, (x, y), (x + width, y + height), color, 4, cv2.LINE_AA)
+        thickness = 6 if index + 1 == selected else 4
+        cv2.rectangle(output, (x, y), (x + width, y + height), color, thickness, cv2.LINE_AA)
         cv2.putText(output, str(index + 1), (x, max(20, y - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2, cv2.LINE_AA)
     return cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
 
@@ -209,6 +211,37 @@ if "crop_detection" in st.session_state:
     scores = detection["scores"]
     threshold = detection["certainty_limit"]
     candidate_ids = [index for index, score in enumerate(scores, start=1) if score * 100 >= threshold]
+    clicked = streamlit_image_coordinates(
+        draw_results(detection["rgb"], contours, [score * 100 >= threshold for score in scores], set(st.session_state.get("crop_excluded_ids", [])), st.session_state.get("crop_selected_id")),
+        key="crop_detection_image",
+    )
+    if clicked:
+        click_x, click_y = float(clicked["x"]), float(clicked["y"])
+        containing = []
+        for index, contour in enumerate(contours, start=1):
+            x, y, width, height = cv2.boundingRect(contour)
+            if x <= click_x <= x + width and y <= click_y <= y + height:
+                containing.append((cv2.pointPolygonTest(contour, (click_x, click_y), True), index))
+        if containing:
+            st.session_state["crop_selected_id"] = max(containing)[1]
+
+    selected_id = st.session_state.get("crop_selected_id")
+    if selected_id:
+        selected_score = scores[selected_id - 1] * 100
+        st.info(f"Planta seleccionada: {selected_id} ({selected_score:.1f}%). El rectángulo amarillo indica la selección.")
+        action_1, action_2 = st.columns(2)
+        with action_1:
+            if st.button("Excluir planta seleccionada", type="primary", use_container_width=True):
+                excluded = set(st.session_state.get("crop_excluded_ids", []))
+                excluded.add(selected_id)
+                st.session_state["crop_excluded_ids"] = sorted(excluded)
+                st.session_state["crop_selected_id"] = None
+                st.rerun()
+        with action_2:
+            if st.button("Limpiar selección", use_container_width=True):
+                st.session_state["crop_selected_id"] = None
+                st.rerun()
+
     excluded_ids = st.multiselect(
         "Excluir falsos positivos",
         options=candidate_ids,
@@ -228,7 +261,7 @@ if "crop_detection" in st.session_state:
     metric_1.metric("Plants detected", len(contours))
     metric_2.metric("Plants recognized", sum(recognized))
     metric_3.metric("Excluded false positives", len(excluded_ids))
-    st.image(draw_results(detection["rgb"], contours, recognized, set(excluded_ids)), caption="Red: accepted; orange: candidate; excluded detections are hidden", use_container_width=True)
+    st.image(draw_results(detection["rgb"], contours, recognized, set(excluded_ids), selected_id), caption="Rojo: aceptada; naranja: candidata; amarillo: seleccionada; excluidas: ocultas", use_container_width=True)
     report = "plant,confidence_percent,recognized,excluded\n" + "\n".join(f"{index},{score * 100:.3f},{accepted},{index in excluded_ids}" for index, (score, accepted) in enumerate(zip(scores, recognized), start=1))
     (detection["output_dir"] / f"{detection['slug']}_plant_count.csv").write_text(report, encoding="utf-8")
     st.download_button("Download plant count CSV", report.encode("utf-8"), f"{detection['slug']}_plant_count.csv", "text/csv")

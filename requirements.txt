@@ -3,3 +3,4 @@ opencv-python-headless>=4.8
 numpy>=1.24
 Pillow>=10.0
 matplotlib>=3.7
+streamlit-image-coordinates>=0.1.9

@@ -211,6 +211,8 @@ if "crop_detection" in st.session_state:
     scores = detection["scores"]
     threshold = detection["certainty_limit"]
     candidate_ids = [index for index, score in enumerate(scores, start=1) if score * 100 >= threshold]
+    st.subheader("Edit detections before export")
+    st.caption("First click inside a red or orange rectangle. The selected plant turns yellow, then use the button below to exclude it.")
     clicked = streamlit_image_coordinates(
         draw_results(detection["rgb"], contours, [score * 100 >= threshold for score in scores], set(st.session_state.get("crop_excluded_ids", [])), st.session_state.get("crop_selected_id")),
         key="crop_detection_image",
@@ -226,21 +228,25 @@ if "crop_detection" in st.session_state:
             st.session_state["crop_selected_id"] = max(containing)[1]
 
     selected_id = st.session_state.get("crop_selected_id")
+    action_1, action_2 = st.columns(2)
+    with action_1:
+        exclude_clicked = st.button("Exclude selected plant", type="primary", disabled=selected_id is None, use_container_width=True)
+    with action_2:
+        clear_clicked = st.button("Clear selection", disabled=selected_id is None, use_container_width=True)
+
+    if exclude_clicked and selected_id is not None:
+        excluded = set(st.session_state.get("crop_excluded_ids", []))
+        excluded.add(selected_id)
+        st.session_state["crop_excluded_ids"] = sorted(excluded)
+        st.session_state["crop_selected_id"] = None
+        st.rerun()
+    if clear_clicked:
+        st.session_state["crop_selected_id"] = None
+        st.rerun()
+
     if selected_id:
         selected_score = scores[selected_id - 1] * 100
         st.info(f"Planta seleccionada: {selected_id} ({selected_score:.1f}%). El rectángulo amarillo indica la selección.")
-        action_1, action_2 = st.columns(2)
-        with action_1:
-            if st.button("Excluir planta seleccionada", type="primary", use_container_width=True):
-                excluded = set(st.session_state.get("crop_excluded_ids", []))
-                excluded.add(selected_id)
-                st.session_state["crop_excluded_ids"] = sorted(excluded)
-                st.session_state["crop_selected_id"] = None
-                st.rerun()
-        with action_2:
-            if st.button("Limpiar selección", use_container_width=True):
-                st.session_state["crop_selected_id"] = None
-                st.rerun()
 
     excluded_ids = st.multiselect(
         "Excluir falsos positivos",

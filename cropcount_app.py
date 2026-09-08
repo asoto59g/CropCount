@@ -134,6 +134,68 @@ def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[b
     return cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
 
 
+def review_training_detections() -> None:
+    review = st.session_state["crop_training_review"]
+    contours = review["contours"]
+    excluded_ids = set(st.session_state.get("training_excluded_ids", []))
+    selected_id = st.session_state.get("training_selected_id")
+    accepted = [index not in excluded_ids for index in range(1, len(contours) + 1)]
+
+    st.subheader("Review training detections before saving")
+    st.caption("Click a detected plant to select it. Yellow means selected; excluded plants will not be stored in the crop model.")
+    clicked = streamlit_image_coordinates(
+        draw_results(review["rgb"], contours, accepted, excluded_ids, selected_id),
+        key="training_review_image",
+    )
+    if clicked:
+        click_x, click_y = float(clicked["x"]), float(clicked["y"])
+        containing = []
+        for index, contour in enumerate(contours, start=1):
+            x, y, width, height = cv2.boundingRect(contour)
+            if x <= click_x <= x + width and y <= click_y <= y + height:
+                containing.append((cv2.pointPolygonTest(contour, (click_x, click_y), True), index))
+        if containing:
+            st.session_state["training_selected_id"] = max(containing)[1]
+            st.rerun()
+
+    selected_id = st.session_state.get("training_selected_id")
+    action_1, action_2 = st.columns(2)
+    with action_1:
+        exclude_clicked = st.button("Exclude selected training plant", type="primary", disabled=selected_id is None, use_container_width=True)
+    with action_2:
+        clear_clicked = st.button("Clear training selection", disabled=selected_id is None, use_container_width=True)
+    if exclude_clicked and selected_id is not None:
+        excluded_ids.add(selected_id)
+        st.session_state["training_excluded_ids"] = sorted(excluded_ids)
+        st.session_state["training_selected_id"] = None
+        st.rerun()
+    if clear_clicked:
+        st.session_state["training_selected_id"] = None
+        st.rerun()
+
+    selected_label = f" Selected: {selected_id}." if selected_id else ""
+    st.info(f"Training plants kept: {len(contours) - len(excluded_ids)} of {len(contours)}.{selected_label}")
+    selected_from_menu = st.multiselect(
+        "Excluded training false positives",
+        options=list(range(1, len(contours) + 1)),
+        default=sorted(excluded_ids),
+        key="training_excluded_selector",
+    )
+    st.session_state["training_excluded_ids"] = selected_from_menu
+    if st.button("Restore all training detections", use_container_width=True):
+        st.session_state["training_excluded_ids"] = []
+        st.session_state["training_excluded_selector"] = []
+        st.rerun()
+
+    if st.button("Save reviewed crop model", type="primary", use_container_width=True):
+        kept = [contour for index, contour in enumerate(contours, start=1) if index not in set(selected_from_menu)]
+        signatures = np.vstack([signature(review["reference_contour"]), *[signature(contour) for contour in kept]])
+        data = model_bytes(signatures, review["crop_name"], review["resolution_cm"], review["minimum_diameter_m"], review["settings"])
+        review["model_path"].write_bytes(data)
+        st.success(f"Reviewed model saved with {len(signatures)} signatures: {review['model_path'].name}")
+        st.download_button("Download reviewed crop model", data, review["model_path"].name, "application/octet-stream")
+
+
 st.title("CropCount")
 st.caption("Count individual plants from aerial imagery using reusable radial signatures")
 st.info("Detection engine: Radial Signature + HSV segmentation + watershed. This version does not use YOLO or a neural network.")
@@ -159,7 +221,7 @@ with st.sidebar:
     saturation_min = st.slider("Minimum saturation", 0, 255, 45)
     value_min = st.slider("Minimum value", 0, 255, 35)
     close_size = st.slider("Morphological closing", 3, 31, 9, step=2)
-    build_requested = st.button("Build / update crop model", type="primary", use_container_width=True)
+    build_requested = st.button("Build detections for review", type="primary", use_container_width=True)
     detect_requested = st.button("Count plants in new image", use_container_width=True)
 
 reference_upload = st.file_uploader("Reference plant image (optional)", type=["png", "jpg", "jpeg", "tif", "tiff"])
@@ -179,12 +241,21 @@ if build_requested:
     if reference_contour is None or not training_contours:
         st.error("No plants were found. Adjust HSV values or the minimum diameter.")
         st.stop()
-    signatures = np.vstack([signature(reference_contour), *[signature(contour) for contour in training_contours]])
-    data = model_bytes(signatures, crop_name, resolution_cm, minimum_diameter_m, settings)
-    model_path.write_bytes(data)
-    st.success(f"{crop_name} model saved with {len(signatures)} plant signatures: {model_path.name}")
-    st.download_button("Download crop model", data, model_path.name, "application/octet-stream")
-    st.image(draw_results(training_rgb, training_contours, [False] * len(training_contours)), caption="Training plants included in the model", use_container_width=True)
+    st.session_state["crop_training_review"] = {
+        "crop_name": crop_name,
+        "rgb": training_rgb,
+        "contours": training_contours,
+        "reference_contour": reference_contour,
+        "resolution_cm": resolution_cm,
+        "minimum_diameter_m": minimum_diameter_m,
+        "settings": settings,
+        "model_path": model_path,
+    }
+    st.session_state["training_excluded_ids"] = []
+    st.session_state["training_selected_id"] = None
+
+if "crop_training_review" in st.session_state:
+    review_training_detections()
 
 if detect_requested:
     model = read_model(model_upload) if model_upload is not None else (read_model(model_path) if model_path.exists() else None)

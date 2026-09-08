@@ -142,10 +142,12 @@ Flujo de uso:
 1. Seleccionar el tipo de cultivo.
 2. Ajustar resolución, diámetro mínimo y segmentación HSV.
 3. Cargar una imagen individual de referencia y una plantación de entrenamiento.
-4. Pulsar **Build / update crop model**.
-5. Cargar el modelo y una nueva plantación.
-6. Pulsar **Count plants in new image**.
-7. Revisar los rectángulos rojos y descargar el conteo CSV.
+4. Pulsar **Build detections for review**.
+5. Revisar visualmente la plantación de entrenamiento y excluir falsos positivos haciendo clic sobre ellos.
+6. Pulsar **Save reviewed crop model** para guardar solo las firmas aceptadas.
+7. Cargar el modelo y una nueva plantación.
+8. Pulsar **Count plants in new image**.
+9. Revisar los rectángulos rojos y descargar el conteo CSV.
 
 Cada especie mantiene su propio archivo `.npz`; no se deben mezclar firmas de banano, piña, sábila y palma en el mismo modelo.
 

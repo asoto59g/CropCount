@@ -109,7 +109,7 @@ En Streamlit Cloud seleccionar:
 | Main file path | `app.py` |
 | Python dependencies | `requirements.txt` |
 
-Después de desplegar, la aplicación quedará disponible en una URL pública de Streamlit. `app.py` es la entrada principal y muestra la navegación multipágina: vectorización individual, comparación, CropCount general y modelo de palma. El modelo y las imágenes que estén dentro del repositorio se cargarán como archivos locales de la app. Los datos privados o pesados deben mantenerse fuera del repositorio y cargarse mediante los controles de la interfaz o un almacenamiento autorizado.
+Después de desplegar, la aplicación quedará disponible en una URL pública de Streamlit. `app.py` es la entrada principal y muestra la navegación multipágina: **Radial Signature**, **Model Generation** y **CropCount**. El modelo y las imágenes que estén dentro del repositorio se cargarán como archivos locales de la app. Los datos privados o pesados deben mantenerse fuera del repositorio y cargarse mediante los controles de la interfaz o un almacenamiento autorizado.
 
 ## Aplicaciones
 
@@ -155,9 +155,9 @@ Para añadir otro cultivo, editar `PROFILES` en `cropcount_app.py`:
 
 Después se deben recopilar imágenes representativas de ese cultivo y crear un modelo independiente. El perfil solo define valores iniciales; la calidad depende de la resolución, iluminación, segmentación y diversidad de las imágenes.
 
-### 1. Vectorizar una imagen individual
+### 1. Radial Signature: vectorizar una imagen individual
 
-Archivo: [`app.py`](app.py)
+Página: [`radial_signature_page.py`](radial_signature_page.py), lanzada desde `app.py`
 
 ```powershell
 python -m streamlit run app.py --server.port 8501
@@ -174,9 +174,9 @@ Funciones:
 - Firma radial de la silueta.
 - Exportación de contorno SVG y firma CSV.
 
-### 2. Comparar una plantación contra una referencia
+### 2. Model Generation: comparar una plantación contra una referencia
 
-Archivo: [`compare_app.py`](compare_app.py)
+Página: `pages/2_Model_Generation.py`, basada en [`compare_app.py`](compare_app.py)
 
 ```powershell
 python -m streamlit run compare_app.py --server.port 8502
@@ -202,9 +202,9 @@ Resultados visuales:
 - Tabla: certeza, correlación, error y estado por palma.
 - CSV: descarga de resultados individuales.
 
-### 3. Crear y reutilizar un modelo de firmas
+### 3. CropCount: crear y reutilizar modelos de firmas
 
-Archivo: [`palm_model_app.py`](palm_model_app.py)
+Página: `pages/3_CropCount.py`, basada en [`cropcount_app.py`](cropcount_app.py)
 
 ```powershell
 python -m streamlit run palm_model_app.py --server.port 8503

@@ -172,6 +172,8 @@ with st.sidebar:
     st.header("Imágenes")
     reference_upload = st.file_uploader("Referencia", type=["png", "jpg", "jpeg", "tif", "tiff"])
     dji_upload = st.file_uploader("Imagen DJI", type=["png", "jpg", "jpeg", "tif", "tiff"])
+    output_subdirectory = st.text_input("Subdirectorio de salida", value="outputs")
+    st.caption("Se crea dentro del proyecto. En Streamlit Cloud no es almacenamiento permanente.")
     st.header("Segmentación común")
     hue_min = st.slider("Tono mínimo (HSV)", 0, 179, 25)
     hue_max = st.slider("Tono máximo (HSV)", 0, 179, 100)
@@ -185,6 +187,11 @@ with st.sidebar:
 
 reference_rgb = load_rgb(reference_upload, REFERENCE_IMAGE)
 dji_rgb = load_rgb(dji_upload, DJI_IMAGE)
+output_dir = (PROJECT_DIR / output_subdirectory).resolve()
+if PROJECT_DIR not in output_dir.parents and output_dir != PROJECT_DIR:
+    st.error("El subdirectorio debe estar dentro del proyecto.")
+    st.stop()
+output_dir.mkdir(parents=True, exist_ok=True)
 
 if not compare_requested:
     st.info("Carga las imágenes o usa los ejemplos y pulsa 'Comparar firmas'.")
@@ -275,4 +282,5 @@ mejor_correlacion_porcentaje,{best_result["correlation"] * 100:.3f}
 mejor_error_medio_porcentaje,{best_result["error"] * 100:.3f}
 rotacion_muestras,{best_result["shift"]}
 """.encode("utf-8")
+(output_dir / "comparison_report.csv").write_bytes(report)
 st.download_button("Descargar resultado CSV", report, "comparacion_dji_11.csv", "text/csv", use_container_width=True)

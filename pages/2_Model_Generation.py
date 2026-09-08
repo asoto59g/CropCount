@@ -1,4 +1,4 @@
-"""Streamlit page wrapper for the radial signature comparison app."""
+"""Streamlit page for model generation and signature comparison."""
 
 import runpy
 from pathlib import Path

@@ -138,7 +138,14 @@ with st.sidebar:
     st.header("Crop profile")
     crop_name = st.selectbox("Crop type", list(PROFILES))
     profile = PROFILES[crop_name]
-    model_path = PROJECT_DIR / f"cropcount_{profile['slug']}.npz"
+    output_subdirectory = st.text_input("Output subdirectory", value="outputs")
+    st.caption("Created inside the project. Streamlit Cloud storage is temporary; download the model for persistence.")
+    output_dir = (PROJECT_DIR / output_subdirectory).resolve()
+    if PROJECT_DIR not in output_dir.parents and output_dir != PROJECT_DIR:
+        st.error("Output subdirectory must stay inside the project.")
+        st.stop()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    model_path = output_dir / f"cropcount_{profile['slug']}.npz"
     resolution_cm = st.number_input("Ground resolution (cm/pixel)", 0.1, 100.0, 6.0, 0.1)
     minimum_diameter_m = st.number_input("Minimum plant diameter (m)", 0.1, 20.0, float(profile["diameter_m"]), 0.1)
     certainty_limit = st.slider("Recognition threshold (%)", 0, 100, 60)
@@ -192,6 +199,7 @@ if detect_requested:
     metric_3.metric("Threshold", f"{certainty_limit}%")
     st.image(draw_results(future_rgb, future_contours, recognized), caption="Red: recognized; orange: candidate", use_container_width=True)
     report = "plant,confidence_percent,recognized\n" + "\n".join(f"{index},{score * 100:.3f},{accepted}" for index, (score, accepted) in enumerate(zip(scores, recognized), start=1))
+    (output_dir / f"{profile['slug']}_plant_count.csv").write_text(report, encoding="utf-8")
     st.download_button("Download plant count CSV", report.encode("utf-8"), f"{profile['slug']}_plant_count.csv", "text/csv")
 
 if not build_requested and not detect_requested:

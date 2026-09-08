@@ -94,6 +94,23 @@ python -m pip install -r requirements.txt
 
 El archivo `requirements.txt` instala Streamlit, OpenCV, NumPy, Pillow y Matplotlib.
 
+### Tamaño de imágenes cargadas
+
+En ejecución local, Streamlit permite por defecto archivos de hasta **200 MB** por carga. Se puede aumentar, por ejemplo, a 1 GB:
+
+```powershell
+python -m streamlit run app.py --server.maxUploadSize 1024
+```
+
+También se puede dejar permanente en `.streamlit/config.toml`:
+
+```toml
+[server]
+maxUploadSize = 1024
+```
+
+En Streamlit Community Cloud aplican los límites y recursos del servicio; aumentar `server.maxUploadSize` localmente no aumenta automáticamente el límite de la app publicada. Para imágenes aéreas grandes conviene comprimirlas, usar una resolución adecuada o dividir el ortomosaico en teselas.
+
 ## Publicar en Streamlit Community Cloud
 
 El repositorio está preparado para desplegar **CropCount** desde:
@@ -126,6 +143,8 @@ URL: <http://localhost:8504>
 CropCount es la aplicación recomendada para ampliar el sistema a diferentes cultivos. El usuario selecciona un perfil, construye un modelo con imágenes representativas y después cuenta plantas individuales en nuevas imágenes.
 
 Antes de descargar el conteo, CropCount permite revisar las detecciones reconocidas con el selector **Excluir falsos positivos**. Selecciona los IDs incorrectos, verifica que desaparezcan de la imagen y descarga el CSV corregido. El botón **Restaurar todas las detecciones** deshace la revisión manual.
+
+Durante la revisión se muestra la **Full plantation view**, que conserva la imagen completa con todas las detecciones. El **Selected detection crop** es únicamente una ampliación auxiliar de la planta seleccionada. También se puede descargar la imagen completa anotada antes de continuar.
 
 Perfiles incluidos:
 

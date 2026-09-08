@@ -144,6 +144,14 @@ def crop_detection(rgb: np.ndarray, contour: np.ndarray, padding: int = 80) -> n
     return rgb[top:bottom, left:right]
 
 
+def image_bytes(rgb: np.ndarray, extension: str = ".jpg") -> bytes:
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    success, encoded = cv2.imencode(extension, bgr)
+    if not success:
+        raise ValueError(f"Could not encode image as {extension}.")
+    return encoded.tobytes()
+
+
 def review_training_detections() -> None:
     review = st.session_state["crop_training_review"]
     contours = review["contours"]
@@ -153,10 +161,14 @@ def review_training_detections() -> None:
 
     st.subheader("Review training detections before saving")
     st.caption("Click a detected plant to select it. Yellow means selected; excluded plants will not be stored in the crop model.")
+    st.markdown("**Full training plantation view**")
+    st.caption("This is the complete image. The crop below is only a zoom of the selected detection.")
+    full_training = draw_results(review["rgb"], contours, accepted, excluded_ids, selected_id)
     clicked = streamlit_image_coordinates(
-        draw_results(review["rgb"], contours, accepted, excluded_ids, selected_id),
+        full_training,
         key="training_review_image",
     )
+    st.download_button("Download full training image with detections", image_bytes(full_training), "training_detections.jpg", "image/jpeg", use_container_width=True)
     if clicked:
         click_x, click_y = float(clicked["x"]), float(clicked["y"])
         click_key = (round(click_x), round(click_y))
@@ -187,6 +199,7 @@ def review_training_detections() -> None:
     selected_label = f" Selected: {selected_id}." if selected_id else ""
     if selected_id:
         st.info(f"Training plant selected: {selected_id}.")
+        st.markdown("**Selected detection crop**")
         st.image(crop_detection(review["rgb"], contours[selected_id - 1]), caption=f"Training plant crop {selected_id}", use_container_width=True)
     st.info(f"Training plants kept: {len(contours) - len(excluded_ids)} of {len(contours)}.{selected_label}")
     selected_from_menu = st.multiselect(
@@ -298,10 +311,14 @@ if "crop_detection" in st.session_state:
     candidate_ids = [index for index, score in enumerate(scores, start=1) if score * 100 >= threshold]
     st.subheader("Edit detections before export")
     st.caption("First click inside a red or orange rectangle. The selected plant turns yellow, then use the button below to exclude it.")
+    st.markdown("**Full plantation view**")
+    full_detection = draw_results(detection["rgb"], contours, [score * 100 >= threshold for score in scores], set(st.session_state.get("crop_excluded_ids", [])), st.session_state.get("crop_selected_id"))
+    st.caption("This is the complete image. The crop below is only a zoom of the selected detection.")
     clicked = streamlit_image_coordinates(
-        draw_results(detection["rgb"], contours, [score * 100 >= threshold for score in scores], set(st.session_state.get("crop_excluded_ids", [])), st.session_state.get("crop_selected_id")),
+        full_detection,
         key="crop_detection_image",
     )
+    st.download_button("Download full plantation image with detections", image_bytes(full_detection), "plantation_detections.jpg", "image/jpeg", use_container_width=True)
     if clicked:
         click_x, click_y = float(clicked["x"]), float(clicked["y"])
         click_key = (round(click_x), round(click_y))
@@ -334,6 +351,7 @@ if "crop_detection" in st.session_state:
     if selected_id:
         selected_score = scores[selected_id - 1] * 100
         st.info(f"Planta seleccionada: {selected_id} ({selected_score:.1f}%). El rectángulo amarillo indica la selección.")
+        st.markdown("**Selected detection crop**")
         st.image(crop_detection(detection["rgb"], contours[selected_id - 1]), caption=f"Recorte de la planta detectada {selected_id}", use_container_width=True)
 
     excluded_ids = st.multiselect(

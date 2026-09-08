@@ -125,6 +125,8 @@ URL: <http://localhost:8504>
 
 CropCount es la aplicación recomendada para ampliar el sistema a diferentes cultivos. El usuario selecciona un perfil, construye un modelo con imágenes representativas y después cuenta plantas individuales en nuevas imágenes.
 
+Antes de descargar el conteo, CropCount permite revisar las detecciones reconocidas con el selector **Excluir falsos positivos**. Selecciona los IDs incorrectos, verifica que desaparezcan de la imagen y descarga el CSV corregido. El botón **Restaurar todas las detecciones** deshace la revisión manual.
+
 Perfiles incluidos:
 
 | Perfil | Diámetro inicial | Modelo |

@@ -120,9 +120,11 @@ def read_model(source) -> dict[str, np.ndarray]:
         return {key: model[key] for key in model.files}
 
 
-def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[bool]) -> np.ndarray:
+def draw_results(rgb: np.ndarray, contours: list[np.ndarray], recognized: list[bool], excluded: set[int] | None = None) -> np.ndarray:
     output = cv2.cvtColor(rgb.copy(), cv2.COLOR_RGB2BGR)
     for index, contour in enumerate(contours):
+        if index + 1 in (excluded or set()):
+            continue
         color = (0, 0, 255) if recognized[index] else (0, 165, 255)
         x, y, width, height = cv2.boundingRect(contour)
         cv2.rectangle(output, (x, y), (x + width, y + height), color, 4, cv2.LINE_AA)
@@ -191,16 +193,45 @@ if detect_requested:
     future_contours = individual_contours(segment_crop(future_rgb, *settings), resolution_cm, minimum_diameter_m)
     prototypes = model["signatures"]
     scores = [compare_signatures(prototypes, signature(contour)) for contour in future_contours]
-    recognized = [score * 100 >= certainty_limit for score in scores]
-    st.success(f"{crop_name}: {sum(recognized)} recognized plants out of {len(future_contours)} detected.")
+    st.session_state["crop_detection"] = {
+        "crop_name": crop_name,
+        "rgb": future_rgb,
+        "contours": future_contours,
+        "scores": scores,
+        "certainty_limit": certainty_limit,
+        "output_dir": output_dir,
+        "slug": profile["slug"],
+    }
+
+if "crop_detection" in st.session_state:
+    detection = st.session_state["crop_detection"]
+    contours = detection["contours"]
+    scores = detection["scores"]
+    threshold = detection["certainty_limit"]
+    candidate_ids = [index for index, score in enumerate(scores, start=1) if score * 100 >= threshold]
+    excluded_ids = st.multiselect(
+        "Excluir falsos positivos",
+        options=candidate_ids,
+        default=st.session_state.get("crop_excluded_ids", []),
+        key="crop_excluded_selector",
+        format_func=lambda plant_id: f"Plant {plant_id} ({scores[plant_id - 1] * 100:.1f}%)",
+        help="Selecciona las detecciones incorrectas antes de descargar el conteo.",
+    )
+    if st.button("Restaurar todas las detecciones", use_container_width=True):
+        st.session_state["crop_excluded_ids"] = []
+        st.session_state["crop_excluded_selector"] = []
+        st.rerun()
+    st.session_state["crop_excluded_ids"] = excluded_ids
+    recognized = [score * 100 >= threshold and index not in excluded_ids for index, score in enumerate(scores, start=1)]
+    st.success(f"{detection['crop_name']}: {sum(recognized)} recognized plants out of {len(contours)} detected.")
     metric_1, metric_2, metric_3 = st.columns(3)
-    metric_1.metric("Plants detected", len(future_contours))
+    metric_1.metric("Plants detected", len(contours))
     metric_2.metric("Plants recognized", sum(recognized))
-    metric_3.metric("Threshold", f"{certainty_limit}%")
-    st.image(draw_results(future_rgb, future_contours, recognized), caption="Red: recognized; orange: candidate", use_container_width=True)
-    report = "plant,confidence_percent,recognized\n" + "\n".join(f"{index},{score * 100:.3f},{accepted}" for index, (score, accepted) in enumerate(zip(scores, recognized), start=1))
-    (output_dir / f"{profile['slug']}_plant_count.csv").write_text(report, encoding="utf-8")
-    st.download_button("Download plant count CSV", report.encode("utf-8"), f"{profile['slug']}_plant_count.csv", "text/csv")
+    metric_3.metric("Excluded false positives", len(excluded_ids))
+    st.image(draw_results(detection["rgb"], contours, recognized, set(excluded_ids)), caption="Red: accepted; orange: candidate; excluded detections are hidden", use_container_width=True)
+    report = "plant,confidence_percent,recognized,excluded\n" + "\n".join(f"{index},{score * 100:.3f},{accepted},{index in excluded_ids}" for index, (score, accepted) in enumerate(zip(scores, recognized), start=1))
+    (detection["output_dir"] / f"{detection['slug']}_plant_count.csv").write_text(report, encoding="utf-8")
+    st.download_button("Download plant count CSV", report.encode("utf-8"), f"{detection['slug']}_plant_count.csv", "text/csv")
 
 if not build_requested and not detect_requested:
     st.info("Choose a crop profile, build its model from representative images, then count plants in a new plantation.")

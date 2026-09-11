@@ -3,4 +3,18 @@ __pycache__/
 .venv/
 .env
 .streamlit/secrets.toml
+
+# Local unpublished training sets and heavy geospatial data
 Train_photos/
+*.tif
+*.tiff
+*.gpkg
+*.gdb/
+
+# Generated outputs (keep demo images and the bundled reference model)
+outputs/
+cropcount_*.npz
+conteo_*.csv
+comparacion_*.csv
+*_detections.jpg
+*.svg
